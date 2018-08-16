@@ -1,8 +1,7 @@
-![ARK Client](https://i.imgur.com/Sj3s29m.jpg)
 
-# ark-client
-CLI client for ARK blockchain.
-You can connect to devnet, mainnet or your custom private/public ARK-derived blockchain.
+# phantom-client
+CLI client for PHANTOM blockchain.
+You can connect to devnet, mainnet or your custom private/public blockchain.
 
 Features:
 - connect to network or a node,
@@ -19,11 +18,7 @@ You need to have node (version 7.6.0 or newer) installed. Then:
 ```
 $> npm install -g arkecosystem/ark-client#master
 $> ark-client
-    ___         __      _________            __
-   /   |  _____/ /__   / ____/ (_)__  ____  / /_
-  / /| | / ___/ //_/  / /   / / / _ \/ __ \/ __/
- / ___ |/ /  / ,<    / /___/ / /  __/ / / / /_  
-/_/  |_/_/  /_/|_|   \____/_/_/\___/_/ /_/\__/  
+
 
 ark>
 ```
