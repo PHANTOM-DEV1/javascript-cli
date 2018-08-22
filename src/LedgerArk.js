@@ -3,12 +3,12 @@
 var Q = require('q');
 var utils = require('ledgerco/src/utils');
 
-var LedgerArk = function(comm) {
+var LedgerPhantom = function(comm) {
 	this.comm = comm;
 	this.comm.setScrambleKey('w0w');
 }
 
-LedgerArk.prototype.getAddress_async = function(path) {
+LedgerPhantom.prototype.getAddress_async = function(path) {
 	var splitPath = utils.splitPath(path);
 	var buffer = Buffer.alloc(5 + 1 + splitPath.length * 4);
 	buffer[0] = 0xe0;
@@ -32,7 +32,7 @@ LedgerArk.prototype.getAddress_async = function(path) {
 	});
 }
 
-LedgerArk.prototype.signTransaction_async = function(path, rawTxHex) {
+LedgerPhantom.prototype.signTransaction_async = function(path, rawTxHex) {
 	var splitPath = utils.splitPath(path);
 	var rawTx = Buffer.from(rawTxHex, 'hex');
 	var self = this;
@@ -90,7 +90,7 @@ LedgerArk.prototype.signTransaction_async = function(path, rawTxHex) {
 	});
 }
 
-LedgerArk.prototype.getAppConfiguration_async = function() {
+LedgerPhantom.prototype.getAppConfiguration_async = function() {
 	var buffer = Buffer.alloc(5);
 	buffer[0] = 0xe0;
 	buffer[1] = 0x06;
@@ -106,7 +106,7 @@ LedgerArk.prototype.getAppConfiguration_async = function() {
 	});
 }
 
-LedgerArk.prototype.signPersonalMessage_async = function(path, messageHex) {
+LedgerPhantom.prototype.signPersonalMessage_async = function(path, messageHex) {
 	var splitPath = utils.splitPath(path);
 	var offset = 0;
 	var message = Buffer.from(messageHex, 'hex');
@@ -150,4 +150,4 @@ LedgerArk.prototype.signPersonalMessage_async = function(path, messageHex) {
 	})
 }
 
-module.exports = LedgerArk;
+module.exports = LedgerPhantom;

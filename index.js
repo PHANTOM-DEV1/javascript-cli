@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const arkjs = require("arkjs");
+const phantomjs = require("phantomjs");
 const crypto = require("crypto");
 const figlet = require("figlet");
 const colors = require("colors");
@@ -20,11 +20,11 @@ const Path = require('path');
 var ledgerSupported = true;
 try {
   var ledger = require('ledgerco');
-  var LedgerArk = require('./src/LedgerArk.js');
+  var LedgerPhantom = require('./src/LedgerPhantom.js');
   var ledgerWorker = child_process.fork(Path.resolve(__dirname, './ledger-worker'));
 } catch (USBError) {
   ledgerSupported = false;
-  vorpal.log(colors.yellow("Warning: Ark-Client is running on a server or virtual machine: No Ledger support available."));
+  vorpal.log(colors.yellow("Warning: Phantom-Client is running on a server or virtual machine: No Ledger support available."));
 }
 
 var blessed = require('blessed');
@@ -33,7 +33,7 @@ var contrib = require('blessed-contrib');
 var connected = false;
 var server;
 var network;
-var arkticker = {};
+var phantomticker = {};
 const currencies = ["USD","AUD", "BRL", "CAD", "CHF", "CNY", "EUR", "GBP", "HKD", "IDR", "INR", "JPY", "KRW", "MXN", "RUB"];
 
 var ledgerAccounts = [];
@@ -42,65 +42,16 @@ var ledgerComm   = null;
 
 const networks = {
   devnet: {
-    nethash: "578e820911f24e039733b45e4882b73e301f813a0d2c31330dafda84534ffa23",
+    nethash: "e62ee59508e610421d7d39567cca36479397fa3c63b1d2e9458e08dee9eb6481",
     peers: [
-      "167.114.29.51:4002",
-      "167.114.29.52:4002",
-      "167.114.29.53:4002",
-      "167.114.29.54:4002",
-      "167.114.29.55:4002"
+      "texplorer.phantom.org:4100"
     ],
-    ledgerpath: "44'/1'/"
+   ledgerpath: "44'/1'/"
   },
   mainnet: {
-    nethash: "6e84d08bd299ed97c212c886c98a57e36545c8f5d645ca7eeae63a8bd62d8988",
+    nethash: "e62ee59508e610421d7d39567cca36479397fa3c63b1d2e9458e08dee9eb6481",
     peers: [
-      "5.39.9.240:4001",
-      "5.39.9.241:4001",
-      "5.39.9.242:4001",
-      "5.39.9.243:4001",
-      "5.39.9.244:4001",
-      "5.39.9.250:4001",
-      "5.39.9.251:4001",
-      "5.39.9.252:4001",
-      "5.39.9.253:4001",
-      "5.39.9.254:4001",
-      "5.39.9.255:4001",
-      "5.39.53.48:4001",
-      "5.39.53.49:4001",
-      "5.39.53.50:4001",
-      "5.39.53.51:4001",
-      "5.39.53.52:4001",
-      "5.39.53.53:4001",
-      "5.39.53.54:4001",
-      "5.39.53.55:4001",
-      "37.59.129.160:4001",
-      "37.59.129.161:4001",
-      "37.59.129.162:4001",
-      "37.59.129.163:4001",
-      "37.59.129.164:4001",
-      "37.59.129.165:4001",
-      "37.59.129.166:4001",
-      "37.59.129.167:4001",
-      "37.59.129.168:4001",
-      "37.59.129.169:4001",
-      "37.59.129.170:4001",
-      "37.59.129.171:4001",
-      "37.59.129.172:4001",
-      "37.59.129.173:4001",
-      "37.59.129.174:4001",
-      "37.59.129.175:4001",
-      "193.70.72.80:4001",
-      "193.70.72.81:4001",
-      "193.70.72.82:4001",
-      "193.70.72.83:4001",
-      "193.70.72.84:4001",
-      "193.70.72.85:4001",
-      "193.70.72.86:4001",
-      "193.70.72.87:4001",
-      "193.70.72.88:4001",
-      "193.70.72.89:4001",
-      "193.70.72.90:4001"
+      "texplorer.phantom.org:4100"
     ],
     ledgerpath: "44'/111'/"
   }
@@ -162,7 +113,7 @@ function postTransaction(container, transaction, cb){
     }, cb);
   };
 
-  let senderAddress = arkjs.crypto.getAddress(transaction.senderPublicKey);
+  let senderAddress = phantomjs.crypto.getAddress(transaction.senderPublicKey);
   getFromNode('http://' + server + '/api/accounts?address=' + senderAddress, function(err, response, body){
     
     if(!err && body) {
@@ -179,9 +130,9 @@ function postTransaction(container, transaction, cb){
             message: 'Second passphrase: ',
           }, function(result) {
             if (result.passphrase) {
-              var secondKeys = arkjs.crypto.getKeys(result.passphrase);
-              arkjs.crypto.secondSign(transaction, secondKeys);
-              transaction.id = arkjs.crypto.getId(transaction);
+              var secondKeys = phantomjs.crypto.getKeys(result.passphrase);
+              phantomjs.crypto.secondSign(transaction, secondKeys);
+              transaction.id = phantomjs.crypto.getId(transaction);
             } else {
               vorpal.log('No second passphrase given. Trying without.');            
             }
@@ -211,9 +162,9 @@ function getFromNode(url, cb){
   );
 }
 
-function getARKTicker(currency){
-  request({url: "https://api.coinmarketcap.com/v1/ticker/ark/?convert="+currency}, function(err, response, body){
-    arkticker[currency]=JSON.parse(body)[0];
+function getPHANTOMTicker(currency){
+  request({url: "https://api.coinmarketcap.com/v1/ticker/phantom/?convert="+currency}, function(err, response, body){
+    phantomticker[currency]=JSON.parse(body)[0];
   });
 }
 
@@ -293,7 +244,7 @@ async function populateLedgerAccounts() {
         (response) => { result = response }
       );
       if (result.publicKey) {
-        result.address = arkjs.crypto.getAddress(result.publicKey);
+        result.address = phantomjs.crypto.getAddress(result.publicKey);
         var accountData = null;
         await requestPromise({
           uri: 'http://' + server + '/api/accounts?address=' + result.address,
@@ -356,7 +307,7 @@ async function ledgerSignTransaction(seriesCb, transaction, account, callback) {
   }
   transaction.senderPublicKey = account.publicKey;
   delete transaction.signature;
-  var transactionHex = arkjs.crypto.getBytes(transaction, true, true).toString("hex");
+  var transactionHex = phantomjs.crypto.getBytes(transaction, true, true).toString("hex");
   var result = null;
   console.log('Please sign the transaction on your Ledger');
   await ledgerBridge.signTransaction_async(account.path, transactionHex).then(
@@ -368,7 +319,7 @@ async function ledgerSignTransaction(seriesCb, transaction, account, callback) {
     return seriesCb('We could not sign the transaction. Close everything using the Ledger and try again.');
   } else if (result.signature) {
     transaction.signature = result.signature;
-    transaction.id = arkjs.crypto.getId(transaction);
+    transaction.id = phantomjs.crypto.getId(transaction);
   } else {
     transaction = null;
   }
@@ -380,7 +331,7 @@ ledgerWorker.on('message', function (message) {
   if (message.connected && network && (!ledgerComm || !ledgerAccounts.length)) {
     ledger.comm_node.create_async().then((comm) => {
       ledgerComm = comm;
-      ledgerBridge = new LedgerArk(ledgerComm);
+      ledgerBridge = new LedgerPhantom(ledgerComm);
       populateLedgerAccounts();
     }).fail((error) => {
       //vorpal.log(colors.red('ledger error: ' +error));
@@ -413,8 +364,8 @@ vorpal
     connect2network(network,function(){
       getFromNode('http://'+server+'/peer/status', function(err, response, body){
         self.log("Node: " + server + ", height: " + JSON.parse(body).height);
-        self.delimiter('ark '+args.network+'>');
-        arkjs.crypto.setNetworkVersion(network.config.version);
+        self.delimiter('phantom '+args.network+'>');
+        phantomjs.crypto.setNetworkVersion(network.config.version);
 	connected = true;
         callback();
       });
@@ -457,7 +408,7 @@ vorpal
       if(err){
         self.log(colors.red("Public API unreacheable on this server "+server+" - "+err));
         server=null;
-        self.delimiter('ark>');
+        self.delimiter('phantom>');
         return callback();
       }
       try {
@@ -467,7 +418,7 @@ vorpal
         self.log(colors.red("API is not returning expected result:"));
         self.log(body);
         server=null;
-        self.delimiter('ark>');
+        self.delimiter('phantom>');
         return callback();
       }
 
@@ -485,7 +436,7 @@ vorpal
         console.log(network.config);
       });
       self.log("Connected to network " + nethash + colors.green(" ("+networkname+")"));
-      self.delimiter('ark '+server+'>');
+      self.delimiter('phantom '+server+'>');
       getFromNode('http://'+server+'/peer/status', function(err, response, body){
         self.log("Node height ", JSON.parse(body).height);
       });
@@ -499,7 +450,7 @@ vorpal
   .action(function(args, callback) {
 		var self = this;
     self.log("Disconnected from "+server);
-    self.delimiter('ark>');
+    self.delimiter('phantom>');
     server=null;
     network=null;
     connected = false;
@@ -526,7 +477,7 @@ vorpal
           return peer.ip+":"+peer.port;
         });
         self.log("Checking "+peers.length+" peers");
-        var spinner = ora({text:"0%",spinner:"shark"}).start();
+        var spinner = ora({text:"0%",spinner:"shphantom"}).start();
         var heights={};
         var delays={};
         var count=0;
@@ -661,9 +612,9 @@ vorpal
         var passphrase = '';
         if (account.passphrase) {
           passphrase = account.passphrase;
-          var keys = arkjs.crypto.getKeys(passphrase);
+          var keys = phantomjs.crypto.getKeys(passphrase);
           publicKey = keys.publicKey;
-          address = arkjs.crypto.getAddress(publicKey);
+          address = phantomjs.crypto.getAddress(publicKey);
         } else if (account.publicKey) {
           address = account.address;
           publicKey = account.publicKey;
@@ -701,7 +652,7 @@ vorpal
               if (result.continue) {
                 if (currentVote) {
                   try {
-                    var unvoteTransaction = arkjs.vote.createVote(passphrase, ['-'+currentVote.publicKey]);
+                    var unvoteTransaction = phantomjs.vote.createVote(passphrase, ['-'+currentVote.publicKey]);
                   } catch (error) {
                     return seriesCb('Failed: ' + error);
                   }
@@ -726,7 +677,7 @@ vorpal
                           } else if (body.transaction) {
                             clearInterval(checkTransactionTimerId);
                             try {
-                              var transaction = arkjs.vote.createVote(passphrase, ['+'+newDelegate.publicKey]);
+                              var transaction = phantomjs.vote.createVote(passphrase, ['+'+newDelegate.publicKey]);
                             } catch (error) {
                               return seriesCb('Failed: ' + error);
                             }
@@ -743,7 +694,7 @@ vorpal
                   });
                 } else {
                   try {
-                    var transaction = arkjs.vote.createVote(passphrase, ['+'+newDelegate.publicKey]);
+                    var transaction = phantomjs.vote.createVote(passphrase, ['+'+newDelegate.publicKey]);
                   } catch (error) {
                     return seriesCb('Failed: ' + error);
                   }
@@ -803,9 +754,9 @@ vorpal
         var passphrase = '';
         if (account.passphrase) {
           passphrase = account.passphrase;
-          var keys = arkjs.crypto.getKeys(passphrase);
+          var keys = phantomjs.crypto.getKeys(passphrase);
           publicKey = keys.publicKey;
-          address = arkjs.crypto.getAddress(publicKey);
+          address = phantomjs.crypto.getAddress(publicKey);
         } else if (account.publicKey) {
           address = account.address;
           publicKey = account.publicKey;
@@ -830,7 +781,7 @@ vorpal
           }, function(result){
             if (result.continue) {
               try {
-                var transaction = arkjs.vote.createVote(passphrase, delegates);
+                var transaction = phantomjs.vote.createVote(passphrase, delegates);
               } catch (error) {
                 return seriesCb('Failed: ' + error);
               }
@@ -871,7 +822,7 @@ vorpal
   });
 
 vorpal
-  .command('account send <amount> <address>', 'Send <amount> ark to <address>. <amount> format examples: 10, USD10.4, EUR100')
+  .command('account send <amount> <address>', 'Send <amount> phantom to <address>. <amount> format examples: 10, USD10.4, EUR100')
   .action(function(args, callback) {
     var self = this;
     if(!isConnected()){
@@ -890,7 +841,7 @@ vorpal
         {
           currency=currencies[i];
           args.amount = Number(args.amount.replace(currency,""));
-          getARKTicker(currency);
+          getPHANTOMTicker(currency);
           found = true;
           break;
         }
@@ -913,9 +864,9 @@ vorpal
         var passphrase = '';
         if (account.passphrase) {
           passphrase = account.passphrase;
-          var keys = arkjs.crypto.getKeys(passphrase);
+          var keys = phantomjs.crypto.getKeys(passphrase);
           publicKey = keys.publicKey;
-          address = arkjs.crypto.getAddress(publicKey);
+          address = phantomjs.crypto.getAddress(publicKey);
         } else if (account.publicKey) {
           address = account.address;
           publicKey = account.publicKey;
@@ -923,28 +874,28 @@ vorpal
           return seriesCb('No public key for account');
         }
 
-        var arkamount = args.amount;
-        var arkAmountString = args.amount;
+        var phantomamount = args.amount;
+        var phantomAmountString = args.amount;
 
         if(currency){
-          if(!arkticker[currency]){
+          if(!phantomticker[currency]){
             return seriesCb("Can't get price from market. Aborted.");
           }
-          arkamount = parseInt(args.amount * 100000000 / Number(arkticker[currency]["price_"+currency.toLowerCase()]),10);
-          arkAmountString = arkamount/100000000;
+          phantomamount = parseInt(args.amount * 100000000 / Number(phantomticker[currency]["price_"+currency.toLowerCase()]),10);
+          phantomAmountString = phantomamount/100000000;
         } else {
-          arkamount = parseInt(args.amount * 100000000, 10);
+          phantomamount = parseInt(args.amount * 100000000, 10);
         }
 
         self.prompt({
           type: 'confirm',
           name: 'continue',
           default: false,
-          message: 'Sending ' + arkAmountString + ' ' + network.config.token+' '+(currency?'('+currency+args.amount+') ':'')+'to '+args.address+' now',
+          message: 'Sending ' + phantomAmountString + ' ' + network.config.token+' '+(currency?'('+currency+args.amount+') ':'')+'to '+args.address+' now',
         }, function(result){
           if (result.continue) {
             try {
-              var transaction = arkjs.transaction.createTransaction(args.address, arkamount, null, passphrase);
+              var transaction = phantomjs.transaction.createTransaction(args.address, phantomamount, null, passphrase);
             } catch (error) {
               return seriesCb('Failed: ' + error);
             }
@@ -1002,9 +953,9 @@ vorpal
         var passphrase = '';
         if (account.passphrase) {
           passphrase = account.passphrase;
-          var keys = arkjs.crypto.getKeys(passphrase);
+          var keys = phantomjs.crypto.getKeys(passphrase);
           publicKey = keys.publicKey;
-          address = arkjs.crypto.getAddress(publicKey);
+          address = phantomjs.crypto.getAddress(publicKey);
         } else if (account.publicKey) {
           address = account.address;
           publicKey = account.publicKey;
@@ -1012,7 +963,7 @@ vorpal
           return seriesCb('No public key for account');
         }
         try {
-          var transaction = arkjs.delegate.createDelegate(passphrase, args.username);
+          var transaction = phantomjs.delegate.createDelegate(passphrase, args.username);
         } catch (error) {
           return seriesCb('Failed: ' + error);
         }
@@ -1058,8 +1009,8 @@ vorpal
     }
     var passphrase = require("bip39").generateMnemonic();
 		self.log("Seed    - private:",passphrase);
-		self.log("WIF     - private:",arkjs.crypto.getKeys(passphrase).toWIF());
-		self.log("Address - public :",arkjs.crypto.getAddress(arkjs.crypto.getKeys(passphrase).publicKey));
+		self.log("WIF     - private:",phantomjs.crypto.getKeys(passphrase).toWIF());
+		self.log("Address - public :",phantomjs.crypto.getAddress(phantomjs.crypto.getKeys(passphrase).publicKey));
 		callback();
   });
 
@@ -1076,7 +1027,7 @@ vorpal
     var numCPUs = require('os').cpus().length;
     var cps=[];
     self.log("Spawning process to "+numCPUs+" cpus");
-    var spinner = ora({text:"passphrases tested: 0",spinner:"shark"}).start();
+    var spinner = ora({text:"passphrases tested: 0",spinner:"shphantom"}).start();
     for (var i = 0; i < numCPUs; i++) {
       var cp=child_process.fork(__dirname+"/vanity.js");
       cps.push(cp);
@@ -1086,8 +1037,8 @@ vorpal
           var passphrase = message.passphrase;
           self.log("Found after",count,"passphrases tested");
           self.log("Seed    - private:",passphrase);
-          self.log("WIF     - private:",arkjs.crypto.getKeys(passphrase).toWIF());
-          self.log("Address - public :",arkjs.crypto.getAddress(arkjs.crypto.getKeys(passphrase).publicKey));
+          self.log("WIF     - private:",phantomjs.crypto.getKeys(passphrase).toWIF());
+          self.log("Address - public :",phantomjs.crypto.getAddress(phantomjs.crypto.getKeys(passphrase).publicKey));
 
           for(var killid in cps){
             cps[killid].kill();
@@ -1116,9 +1067,9 @@ vorpal
       if (result.passphrase) {
         var hash = crypto.createHash('sha256');
         hash = hash.update(new Buffer(args.message,"utf-8")).digest();
-        self.log("public key: ",arkjs.crypto.getKeys(result.passphrase).publicKey);
-        self.log("address   : ",arkjs.crypto.getAddress(arkjs.crypto.getKeys(result.passphrase).publicKey));
-        self.log("signature : ",arkjs.crypto.getKeys(result.passphrase).sign(hash).toDER().toString("hex"));
+        self.log("public key: ",phantomjs.crypto.getKeys(result.passphrase).publicKey);
+        self.log("address   : ",phantomjs.crypto.getAddress(phantomjs.crypto.getKeys(result.passphrase).publicKey));
+        self.log("signature : ",phantomjs.crypto.getKeys(result.passphrase).sign(hash).toDER().toString("hex"));
 
       } else {
         self.log('Aborted.');
@@ -1142,8 +1093,8 @@ vorpal
           hash = hash.update(new Buffer(args.message,"utf-8")).digest();
           var signature = new Buffer(result.signature, "hex");
         	var publickey= new Buffer(args.publickey, "hex");
-        	var ecpair = arkjs.ECPair.fromPublicKeyBuffer(publickey);
-        	var ecsignature = arkjs.ECSignature.fromDER(signature);
+        	var ecpair = phantomjs.ECPair.fromPublicKeyBuffer(publickey);
+        	var ecsignature = phantomjs.ECSignature.fromDER(signature);
         	var res = ecpair.verify(hash, ecsignature);
           self.log(res);
         }
@@ -1158,36 +1109,36 @@ vorpal
     });
 
   });
-var sharkspinner;
+var shphantomspinner;
 vorpal
-  .command("shARK", "No you don't want to use this command")
+  .command("shPHANTOM", "No you don't want to use this command")
   .action(function(args, callback) {
     var self = this;
-    self.log(colors.red(figlet.textSync("shARK")));
-    sharkspinner = ora({text:"Watch out, the shARK attack!",spinner:"shark"}).start();
+    self.log(colors.red(figlet.textSync("shPHANTOM")));
+    shphantomspinner = ora({text:"Watch out, the shPHANTOM attack!",spinner:"shphantom"}).start();
     callback();
   });
 
 vorpal
-  .command("spARKaaaaa!")
+  .command("spPHANTOMaaaaa!")
   .hidden()
   .action(function(args, callback) {
     var time = 0;
     var self=this;
-    sharkspinner && sharkspinner.stop();
-    ["tux","meow","bunny","cower","dragon-and-cow"].forEach(function(spark){
+    shphantomspinner && shphantomspinner.stop();
+    ["tux","meow","bunny","cower","dragon-and-cow"].forEach(function(spphantom){
       setTimeout(function(){
-        self.log(cowsay.say({text:"SPAAAAARKKKAAAAAAA!", f:spark}));
+        self.log(cowsay.say({text:"SPAAAAPHANTOMKKAAAAAAA!", f:spphantom}));
   		}, time++*1000);
     });
 
     callback();
   });
 
-vorpal.history('ark-client');
+vorpal.history('phantom-client');
 
-vorpal.log(colors.cyan(figlet.textSync("Ark Client","Slant")));
+vorpal.log(colors.cyan(figlet.textSync("Phantom Client","Slant")));
 
 vorpal
-  .delimiter('ark>')
+  .delimiter('phantom>')
   .show();
