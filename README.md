@@ -49,46 +49,6 @@ phantom> help
 
 
 
-```
-phantom> connect devnet
-Node: 5.39.9.246:4002, height: 21078
-phantom devnet>
-```
-
-```
-phantom devnet> account create
-Seed    - private: rely cup brand sentence wolf amateur clog knock execute avocado they ready
-WIF     - private: SBHAcXWeCEBDaLVUm4B3idHoLde2qrmi2gkxz8KXtNYfjVMK16pH
-Address - public : DMUeELFkFtN5obvStkV9Zt44GEjEaYgKhH
-```
-
-```
-phantom devnet> account send 100 AMUeELFkFtN5obvStkV9Zt44GEjEaYgKhH
-passphrase: ************************************************************************
-Transaction sent successfully with id 7adbf890c88dd345eacbac63e94610fa5f3905528cdc1c36740c3ba3fa3db302
-```
-
-```
-phantom devnet> account delegate rockingark
-passphrase: **************************************************************************
-Transaction sent successfully with id b857f302611e4f36a33ea886f7bcb951633406ba1f5e40393893234a46ce54eb
-```
-
-```
-phantom devnet> account status DMUeELFkFtN5obvStkV9Zt44GEjEaYgKhH
-{ address: 'DMUeELFkFtN5obvStkV9Zt44GEjEaYgKhH',
-  unconfirmedBalance: '7500000000',
-  balance: '7500000000',
-  publicKey: '020cfc61215f2682bd70cce14aaa6cfa6fa3b0507771cb1943aee071a7dd57bcf6',
-  username: 'rockingark',
-  vote: '0',
-  producedblocks: 0,
-  missedblocks: 0,
-  rate: 52,
-  approval: 0,
-  productivity: 0 }
-```
-
 ## Security
 
 If you discover a security vulnerability within this application, please send an e-mail to security@phantom.org. All security vulnerabilities will be promptly addressed.
