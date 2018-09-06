@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const phantomjs = require("phantomjs");
+const phantomjs = require("phantomjscore");
 const crypto = require("crypto");
 const figlet = require("figlet");
 const colors = require("colors");

@@ -1,5 +1,5 @@
 var bip39 = require("bip39");
-var phantomjs = require("phantomjs");
+var phantomjs = require("phantomjscore");
 
 process.on("message", function(message){
 
